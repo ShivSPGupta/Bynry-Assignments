@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Request System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        input[type="submit"],
+        button {
+            padding: 8px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button {
+            background-color: #28a745;
+        }
+        .message {
+            margin-top: 20px;
+        }
+        #trackedRequest {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h2>Service Request System</h2>
+    <form id="serviceRequestForm">
+        <label for="type">Type of Request:</label>
+        <input type="text" id="type" name="type" required>
+        <label for="details">Request Details:</label>
+        <textarea id="details" name="details" rows="4" required></textarea>
+        <input type="submit" value="Submit Request">
+    </form>
+    <button id="trackRequest">Track Request</button>
+    <div id="message" class="message"></div>
+    <div id="trackedRequest">
+        <h3>Tracked Request Details</h3>
+        <p><strong>Type:</strong> <span id="trackedType"></span></p>
+        <p><strong>Details:</strong> <span id="trackedDetails"></span></p>
+        <p><strong>Status:</strong> <span id="trackedStatus"></span></p>
+        <p><strong>Submission Date:</strong> <span id="trackedSubmissionDate"></span></p>
+        <p><strong>Resolution Date:</strong> <span id="trackedResolutionDate"></span></p>
+    </div>
+
+    <script>
+        function submitRequest(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            fetch('http://localhost:3000/service-requests', {
+                method: 'POST',
+                body: JSON.stringify(Object.fromEntries(formData)),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('message').innerText = `Request submitted successfully. ID: ${data.id}`;
+                form.reset();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('message').innerText = 'An error occurred while submitting the request.';
+            });
+        }
+
+        document.getElementById('serviceRequestForm').addEventListener('submit', submitRequest);
+
+        function trackRequest() {
+            const requestId = prompt('Enter the ID of the request:');
+            if (requestId) {
+                fetch(`http://localhost:3000/service-requests/${requestId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Request not found');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('trackedType').innerText = data.type;
+                    document.getElementById('trackedDetails').innerText = data.details;
+                    document.getElementById('trackedStatus').innerText = data.status;
+                    document.getElementById('trackedSubmissionDate').innerText = data.submissionDate;
+                    document.getElementById('trackedResolutionDate').innerText = data.resolutionDate ? data.resolutionDate : 'Not resolved';
+                    document.getElementById('trackedRequest').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while tracking the request.');
+                });
+            }
+        }
+
+    
+        document.getElementById('trackRequest').addEventListener('click', trackRequest);
+    </script>
+</body>
+</html>
